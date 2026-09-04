@@ -13,8 +13,8 @@ SEED = 3501
 # --- Generation (D2, D3) ---
 OLLAMA_BASE_URL = "http://localhost:11434/v1"
 MODELS = [
-    # D2: two local models, different families. Tags are PROPOSED and unverified —
-    # ollama is not installed yet (2026-09-04); confirm tags after `ollama pull`.
+    # D2: two local models, different families. Pulled + verified against the
+    # endpoint 2026-09-04 (ollama 0.33.3).
     {"name": "llama3.1:8b", "backend": "ollama"},
     {"name": "qwen2.5:7b-instruct", "backend": "ollama"},
 ]

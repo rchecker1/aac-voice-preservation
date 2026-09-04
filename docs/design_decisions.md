@@ -21,8 +21,8 @@ Options: one local quantized ~8B instruct model only; add a second local model;
 add one frontier API model for contrast (few dollars).
 Tradeoff: two models minimum makes "is this model-specific?" answerable.
 **DECISION:** two local models from different families via ollama: `llama3.1:8b` and
-`qwen2.5:7b-instruct` (proposed tags — pending `ollama pull`; ollama not yet installed
-as of 2026-09-04). No API contrast model.
+`qwen2.5:7b-instruct` (both pulled and endpoint-verified 2026-09-04, ollama 0.33.3).
+No API contrast model.
 **Rationale:**
 
 ## D3. Samples per input (k) and decoding
