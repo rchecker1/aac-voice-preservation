@@ -9,8 +9,8 @@ Legend: **[YOU]** = RajC only (the parts that make the work yours and keep it va
 ## Thu Sept 4 — lock the design (today)
 - [ ] **[YOU]** Rewrite the RQ in your own words in `paper/outline.md`.
 - [ ] **[YOU]** Make decisions D1–D7 in `docs/design_decisions.md` (with rationale).
-- [ ] **[CC]** Set up venv, ollama, pull the chosen models, smoke-test generation.
-- [ ] **[CC]** Implement `compress.py` per D1 and unit-test it on 10 toy sentences.
+- [x] **[CC]** Set up venv, ollama, pull the chosen models, smoke-test generation.
+- [x] **[CC]** Implement `compress.py` per D1 and unit-test it on 10 toy sentences.
 - [ ] **[YOU]** Locate + download the neutral AAC-like phrase set (see `data/README.md`);
       record license/terms in `data/raw/SOURCES.md`.
 
@@ -18,9 +18,12 @@ Legend: **[YOU]** = RajC only (the parts that make the work yours and keep it va
 - [ ] **[YOU]** Write the autistic-style suite + matched control suite (50–100 items
       each), feature-tagged, each tag grounded in a citation. This is the single most
       important human task in the project. No AI involvement, none.
-- [ ] **[CC]** Validation script: schema check, length stats, tag counts.
-- [ ] **[CC]** `generate.py`: expansions for all inputs × models × k samples, seeded,
-      logged to `results/`.
+- [x] **[CC]** Validation script: schema check, length stats, tag counts.
+      (`srcalidate_suites.py` — run it as you write; it also previews which items
+      compress.py would exclude.)
+- [x] **[CC]** `generate.py`: expansions for all inputs × models × k samples, seeded,
+      logged to `results/`. Smoke-tested on both D2 models; same seed reproduces
+      byte-identical output.
 
 ## Sat Sept 6 — run everything + human judgment
 - [ ] **[CC]** `metrics.py`: fidelity, style-drift features, NLI additions flags.

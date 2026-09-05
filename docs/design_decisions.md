@@ -14,6 +14,17 @@ Tradeoff: (a) is simplest to describe and defend; (c) doubles runs but gives a n
 **DECISION:** (a) — simple POS content-word rule (keep NOUN/PROPN/VERB/ADJ/NUM, drop
 stopwords/auxiliaries), order of appearance, cap N=4 (`MAX_KEYWORDS = 4`). N=2 is a
 stretch condition, not planned.
+**Rationale:** Appearance order avoids adding judgement.
+
+**D1a. Scope of "drop stopwords" (refinement, decided 2026-09-05).**
+The stopword clause applies only to function words, which `KEEP_POS` already excludes
+(DET/ADP/PRON/PART/AUX). spaCy's stop list is **not** applied to content words.
+Measured on `data/raw/aac_comm/sent_dev_aac.txt` (557 items): applying the stop list to
+content words dropped `go`(30), `have`(25), `get`(24), `do`(11), `see`(8), `call`(7),
+`give`(7), `take`(6) and excluded 219/557 items (39%) for yielding < 2 keywords;
+not applying it excludes 157/557 (28%). It also removed number words (`three`) while
+keeping digits (`8`), though both are NUM. Implemented in `compress.py::_keep`;
+`compress.py` still reports the affected tokens per run as STOPWORD-DROPPED.
 **Rationale:**
 
 ## D2. Models under test
