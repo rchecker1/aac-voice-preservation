@@ -142,6 +142,18 @@ def drift_composite(df):
 
 PAIR_ID_RE = re.compile(r"(\d+)")
 
+# Polarity. Negation is carried almost entirely by function words (no, not, n't,
+# never), which the D1 content-word rule removes, so a refusal can reach the model as
+# an affirmative keyword set. Tracked per row because an AAC system that turns "no"
+# into "yes" is a different and more serious failure than a register shift.
+NEGATION_RE = re.compile(
+    r"\b(?:no|not|never|none|nothing|nobody|cannot|dont|doesnt|isnt|wasnt|wont|cant)\b"
+    r"|n't", re.IGNORECASE)
+
+
+def has_negation(text: str) -> bool:
+    return bool(NEGATION_RE.search(text or ""))
+
 
 # --- helpers -----------------------------------------------------------------
 
@@ -352,6 +364,14 @@ def main() -> None:
             row[f"d_{feat}"] = sf_exp[feat] - sf_src[feat]
         row["src_n_tokens"] = sf_src["n_tokens"]
         row["exp_n_tokens"] = sf_exp["n_tokens"]
+        src_neg = has_negation(src)
+        exp_neg = has_negation(exp)
+        row["src_has_negation"] = src_neg
+        row["keywords_has_negation"] = has_negation(" ".join(rec.get("keywords") or []))
+        row["exp_has_negation"] = exp_neg
+        # True only where the source was negated and the expansion is not: the
+        # polarity of the utterance was inverted somewhere in the pipeline.
+        row["polarity_lost"] = bool(src_neg and not exp_neg)
 
         if nli is not None:
             clauses = split_clauses(exp)

@@ -28,9 +28,76 @@ def fmt(x, nd=3) -> str:
         return str(x)
 
 
+def agreement_block(run_dir: Path, hc_path: Path) -> list[str]:
+    """NLI flags vs RajC's hand codes (D6: flags only prioritise, codes are truth).
+
+    The question is whether the automatic flag is a usable triage signal, so this
+    reports the 2x2 against "code above faithful", with precision, recall and Cohen's
+    kappa. Low precision is not a failure of the study -- it is the reason D6 says
+    hand-coding is the ground truth -- but it needs stating either way.
+    """
+    import pandas as pd
+
+    hc = pd.read_csv(hc_path)
+    hc = hc[hc["code"].astype(str).str.strip() != ""]
+    if not len(hc):
+        return ["## NLI vs hand codes", "", "No filled-in codes yet.", ""]
+
+    if "n_unentailed" not in hc.columns:
+        return ["## NLI vs hand codes", "",
+                "Export has no NLI columns; re-run metrics without --no-nli.", ""]
+
+    hc["nli_flag"] = hc["n_unentailed"] > 0
+    hc["hand_flag"] = hc["code"].astype(str).str.strip().str.lower() != "faithful"
+
+    tp = int((hc.nli_flag & hc.hand_flag).sum())
+    fp = int((hc.nli_flag & ~hc.hand_flag).sum())
+    fn = int((~hc.nli_flag & hc.hand_flag).sum())
+    tn = int((~hc.nli_flag & ~hc.hand_flag).sum())
+    n = tp + fp + fn + tn
+    precision = tp / (tp + fp) if tp + fp else float("nan")
+    recall = tp / (tp + fn) if tp + fn else float("nan")
+    po = (tp + tn) / n if n else float("nan")
+    pe = (((tp + fp) * (tp + fn) + (fn + tn) * (fp + tn)) / (n * n)) if n else float("nan")
+    kappa = (po - pe) / (1 - pe) if pe not in (1.0,) and pe == pe else float("nan")
+
+    out = ["## NLI flags vs hand codes", "",
+           "Hand codes are the ground truth (D6); the flag only prioritises.", "",
+           "| | hand: not faithful | hand: faithful |", "|---|---|---|",
+           f"| NLI flagged | {tp} | {fp} |",
+           f"| NLI clear | {fn} | {tn} |", "",
+           f"- coded items: {n}",
+           f"- precision {fmt(precision, 2)}, recall {fmt(recall, 2)}, "
+           f"Cohen's kappa {fmt(kappa, 2)}", ""]
+
+    counts = hc["code"].astype(str).str.strip().value_counts()
+    out += ["### Code distribution (worst-wins)", "",
+            "| code | n | share |", "|---|---|---|"]
+    for code, k in counts.items():
+        out.append(f"| {code} | {k} | {fmt(k / len(hc), 2)} |")
+    out.append("")
+
+    if "condition" in hc.columns:
+        out += ["### By condition", "", "| condition | n | share not faithful |",
+                "|---|---|---|"]
+        for cond, sub in hc.groupby("condition"):
+            out.append(f"| {cond} | {len(sub)} | {fmt(sub['hand_flag'].mean(), 2)} |")
+        out.append("")
+
+    missing = hc[hc["hand_flag"] & (hc.get("notes", "").astype(str).str.strip() == "")]
+    if len(missing):
+        out.append(f"**{len(missing)} item(s) coded above `faithful` with no notes** — "
+                   "D7 makes notes mandatory there. Ids: "
+                   + ", ".join(missing["item_id"].astype(str).head(15)) + "")
+        out.append("")
+    return out
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--run", required=True, type=Path, help="results/<run_id>/")
+    parser.add_argument("--handcodes", type=Path,
+                        help="filled-in hand-coding CSV; adds the agreement section")
     args = parser.parse_args()
 
     import pandas as pd
@@ -91,6 +158,34 @@ def main() -> None:
                    f"| {fmt(r['convergence_delta'], 4)} |")
     out.append("")
 
+    # --- polarity ---
+    if "src_has_negation" in metrics.columns:
+        neg = metrics[metrics["src_has_negation"]]
+        if len(neg):
+            out += ["## Polarity survival", "",
+                    "Negation is carried by function words, which the D1 content-word "
+                    "rule removes.", "",
+                    f"- items whose source is negated: {neg['id'].nunique()} "
+                    f"({len(neg)} generations)",
+                    f"- keyword sets that still carry negation: "
+                    f"{int(neg['keywords_has_negation'].sum())} / {len(neg)}",
+                    f"- expansions that restore negation: "
+                    f"{int(neg['exp_has_negation'].sum())} / {len(neg)} "
+                    f"({fmt(neg['exp_has_negation'].mean() * 100, 0)}%)",
+                    f"- **polarity lost: {fmt(neg['polarity_lost'].mean() * 100, 0)}% "
+                    "of negated utterances come back affirmative**", ""]
+            out += ["| condition | negated generations | polarity lost | "
+                    "mean fidelity (negated) | mean fidelity (rest) |",
+                    "|---|---|---|---|---|"]
+            for cond, sub in metrics.groupby("set"):
+                sn = sub[sub["src_has_negation"]]
+                if not len(sn):
+                    continue
+                out.append(f"| {cond} | {len(sn)} | {fmt(sn['polarity_lost'].mean(), 2)} "
+                           f"| {fmt(sn['fidelity_cosine'].mean())} "
+                           f"| {fmt(sub[~sub['src_has_negation']]['fidelity_cosine'].mean())} |")
+            out.append("")
+
     # --- do-not-report flags ---
     flags = []
     for _, r in stats.iterrows():
@@ -104,6 +199,9 @@ def main() -> None:
                      "length-adjusted row as primary and both in the table.")
     if flags:
         out += ["## Do not report as findings", ""] + [f"- {f}" for f in flags] + [""]
+
+    if args.handcodes and args.handcodes.exists():
+        out += agreement_block(run_dir, args.handcodes)
 
     out += ["---", "",
             f"Generated by `src/summarize.py` from the CSVs in `{run_dir.as_posix()}`. "
