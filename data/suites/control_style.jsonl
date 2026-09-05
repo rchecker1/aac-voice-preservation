@@ -1,0 +1,50 @@
+{"id": "ctl-001", "set": "control_style", "style_tags": [], "text": "Would you mind closing the door? It's a bit loud out here.", "topic": "noise"}
+{"id": "ctl-002", "set": "control_style", "style_tags": [], "text": "I think the meeting's supposed to start around 3ish, room 204 I believe.", "topic": "scheduling"}
+{"id": "ctl-003", "set": "control_style", "style_tags": [], "text": "I'm not really sure I'm up for the party tonight, sorry.", "topic": "social plans"}
+{"id": "ctl-004", "set": "control_style", "style_tags": [], "text": "Careful, the soup might still be a little warm.", "topic": "food"}
+{"id": "ctl-005", "set": "control_style", "style_tags": [], "text": "So you'll want to turn left in a bit, and it should be somewhere near there.", "topic": "directions"}
+{"id": "ctl-006", "set": "control_style", "style_tags": [], "text": "Sorry, would it be okay if we kept it down for a minute? I'm trying to focus.", "topic": "noise"}
+{"id": "ctl-007", "set": "control_style", "style_tags": [], "text": "I could maybe go for a little something to eat, if that's alright.", "topic": "food"}
+{"id": "ctl-008", "set": "control_style", "style_tags": [], "text": "I have some concerns the plan might be a bit tricky given the budget.", "topic": "work feedback"}
+{"id": "ctl-009", "set": "control_style", "style_tags": [], "text": "The bus should be leaving sometime in the morning, takes a while I think.", "topic": "transport"}
+{"id": "ctl-010", "set": "control_style", "style_tags": [], "text": "Whenever you get a chance, no rush, I might need a hand with this.", "topic": "requests"}
+{"id": "ctl-011", "set": "control_style", "style_tags": [], "text": "I'm feeling a little off today, not sure what it is.", "topic": "health"}
+{"id": "ctl-012", "set": "control_style", "style_tags": [], "text": "Hmm, I don't think that's really my thing, maybe not this time.", "topic": "preferences"}
+{"id": "ctl-013", "set": "control_style", "style_tags": [], "text": "I believe the report's due sometime around the end of the week.", "topic": "deadlines"}
+{"id": "ctl-014", "set": "control_style", "style_tags": [], "text": "This shirt feels a bit snug, maybe.", "topic": "clothing"}
+{"id": "ctl-015", "set": "control_style", "style_tags": [], "text": "I might've just missed something, but the explanation lost me a little.", "topic": "feedback"}
+{"id": "ctl-016", "set": "control_style", "style_tags": [], "text": "I was thinking maybe we could head out sometime soon, if that works.", "topic": "social plans"}
+{"id": "ctl-017", "set": "control_style", "style_tags": [], "text": "I think you take the medicine a couple times a day or so.", "topic": "medical"}
+{"id": "ctl-018", "set": "control_style", "style_tags": [], "text": "Would it be possible to maybe lower the music a touch?", "topic": "noise"}
+{"id": "ctl-019", "set": "control_style", "style_tags": [], "text": "I'm feeling a little chilly, if there's a blanket around somewhere.", "topic": "comfort"}
+{"id": "ctl-020", "set": "control_style", "style_tags": [], "text": "I think there might've been a small mix-up with the test results.", "topic": "feedback"}
+{"id": "ctl-021", "set": "control_style", "style_tags": [], "text": "Just a heads up, rent's due around the start of the month I think.", "topic": "money"}
+{"id": "ctl-022", "set": "control_style", "style_tags": [], "text": "I'm not always a huge fan of really loud environments.", "topic": "preferences"}
+{"id": "ctl-023", "set": "control_style", "style_tags": [], "text": "Sorry to circle back, but I was just wondering if you got a chance to think about that question.", "topic": "feedback"}
+{"id": "ctl-024", "set": "control_style", "style_tags": [], "text": "Looks like the flight might be running a little behind schedule.", "topic": "travel"}
+{"id": "ctl-025", "set": "control_style", "style_tags": [], "text": "I'm feeling pretty worn out, might need to rest a bit.", "topic": "health"}
+{"id": "ctl-026", "set": "control_style", "style_tags": [], "text": "Maybe just a little more salt could help, if you think so too.", "topic": "food"}
+{"id": "ctl-027", "set": "control_style", "style_tags": [], "text": "I see where you're coming from, though I might see it a little differently.", "topic": "feedback"}
+{"id": "ctl-028", "set": "control_style", "style_tags": [], "text": "I'm feeling a bit shaky, not totally sure why.", "topic": "health"}
+{"id": "ctl-029", "set": "control_style", "style_tags": [], "text": "The store's open for a while longer I think, plenty of time probably.", "topic": "scheduling"}
+{"id": "ctl-030", "set": "control_style", "style_tags": [], "text": "It's a little bright in here, maybe.", "topic": "comfort"}
+{"id": "ctl-031", "set": "control_style", "style_tags": [], "text": "Whenever's convenient, there might be a small typo somewhere around line 3.", "topic": "work feedback"}
+{"id": "ctl-032", "set": "control_style", "style_tags": [], "text": "You'll take an exit somewhere along there, then merge onto the highway.", "topic": "directions"}
+{"id": "ctl-033", "set": "control_style", "style_tags": [], "text": "I might need to step away for a second, if that's alright.", "topic": "health"}
+{"id": "ctl-034", "set": "control_style", "style_tags": [], "text": "Ha, interesting, not totally my kind of humor maybe.", "topic": "feedback"}
+{"id": "ctl-035", "set": "control_style", "style_tags": [], "text": "I think the printer might be having some issues, maybe try the other one?", "topic": "work"}
+{"id": "ctl-036", "set": "control_style", "style_tags": [], "text": "I think I'd maybe prefer water, if that's not too much trouble.", "topic": "food"}
+{"id": "ctl-037", "set": "control_style", "style_tags": [], "text": "Class should be starting sometime early next week I believe.", "topic": "scheduling"}
+{"id": "ctl-038", "set": "control_style", "style_tags": [], "text": "Would you mind possibly passing the remote whenever you get a chance?", "topic": "requests"}
+{"id": "ctl-039", "set": "control_style", "style_tags": [], "text": "This chair's maybe not the comfiest, just a small thought.", "topic": "comfort"}
+{"id": "ctl-040", "set": "control_style", "style_tags": [], "text": "I think there's an invoice for around four hundred and some, due sometime soon.", "topic": "money"}
+{"id": "ctl-041", "set": "control_style", "style_tags": [], "text": "I might just need a tiny bit more clarification on the instructions, sorry.", "topic": "feedback"}
+{"id": "ctl-042", "set": "control_style", "style_tags": [], "text": "If it's okay, maybe just hang around here a bit, I'll try to be quick.", "topic": "social plans"}
+{"id": "ctl-043", "set": "control_style", "style_tags": [], "text": "I believe you take it a couple times a day with some food.", "topic": "medical"}
+{"id": "ctl-044", "set": "control_style", "style_tags": [], "text": "I could be wrong, but that answer doesn't seem quite right to me.", "topic": "feedback"}
+{"id": "ctl-045", "set": "control_style", "style_tags": [], "text": "Whenever's convenient, I might need a ride around evening time.", "topic": "transport"}
+{"id": "ctl-046", "set": "control_style", "style_tags": [], "text": "My headphones seem to be acting up a little.", "topic": "technology"}
+{"id": "ctl-047", "set": "control_style", "style_tags": [], "text": "I think the password needs to be a certain length with some kind of number maybe.", "topic": "technology"}
+{"id": "ctl-048", "set": "control_style", "style_tags": [], "text": "I'm feeling a bit much at the moment, if that makes sense.", "topic": "health"}
+{"id": "ctl-049", "set": "control_style", "style_tags": [], "text": "Would it be possible to maybe cancel tomorrow's appointment, sorry for the trouble.", "topic": "scheduling"}
+{"id": "ctl-050", "set": "control_style", "style_tags": [], "text": "I was thinking maybe it might be time to head home, if that's alright with everyone.", "topic": "social plans"}

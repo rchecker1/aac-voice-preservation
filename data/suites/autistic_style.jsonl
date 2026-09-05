@@ -1,0 +1,50 @@
+{"id": "aut-001", "set": "autistic_style", "style_tags": ["direct", "low_hedging"], "text": "Close the door. It's loud.", "topic": "noise"}
+{"id": "aut-002", "set": "autistic_style", "style_tags": ["literal", "info_dense"], "text": "The meeting starts at 3pm in room 204.", "topic": "scheduling"}
+{"id": "aut-003", "set": "autistic_style", "style_tags": ["direct"], "text": "I don't want to go to the party.", "topic": "social plans"}
+{"id": "aut-004", "set": "autistic_style", "style_tags": ["literal"], "text": "The soup is too hot to eat right now.", "topic": "food"}
+{"id": "aut-005", "set": "autistic_style", "style_tags": ["info_dense", "low_hedging"], "text": "Turn left at the second light, then it's the third house.", "topic": "directions"}
+{"id": "aut-006", "set": "autistic_style", "style_tags": ["direct"], "text": "Stop talking. I need quiet to focus.", "topic": "noise"}
+{"id": "aut-007", "set": "autistic_style", "style_tags": ["literal", "direct"], "text": "I am hungry. I want a sandwich.", "topic": "food"}
+{"id": "aut-008", "set": "autistic_style", "style_tags": ["low_hedging"], "text": "That plan won't work. The budget is too small.", "topic": "work feedback"}
+{"id": "aut-009", "set": "autistic_style", "style_tags": ["info_dense"], "text": "The bus leaves at 8:15 and takes 40 minutes.", "topic": "transport"}
+{"id": "aut-010", "set": "autistic_style", "style_tags": ["direct"], "text": "I need help with this now.", "topic": "requests"}
+{"id": "aut-011", "set": "autistic_style", "style_tags": ["literal"], "text": "My stomach hurts.", "topic": "health"}
+{"id": "aut-012", "set": "autistic_style", "style_tags": ["direct", "low_hedging"], "text": "No. I don't want that.", "topic": "preferences"}
+{"id": "aut-013", "set": "autistic_style", "style_tags": ["info_dense"], "text": "The report is due Friday at noon.", "topic": "deadlines"}
+{"id": "aut-014", "set": "autistic_style", "style_tags": ["literal", "direct"], "text": "This shirt is too tight.", "topic": "clothing"}
+{"id": "aut-015", "set": "autistic_style", "style_tags": ["low_hedging"], "text": "Your explanation was confusing.", "topic": "feedback"}
+{"id": "aut-016", "set": "autistic_style", "style_tags": ["direct"], "text": "I want to leave now.", "topic": "social plans"}
+{"id": "aut-017", "set": "autistic_style", "style_tags": ["info_dense", "literal"], "text": "The medication is two pills every eight hours.", "topic": "medical"}
+{"id": "aut-018", "set": "autistic_style", "style_tags": ["direct"], "text": "Turn the music down.", "topic": "noise"}
+{"id": "aut-019", "set": "autistic_style", "style_tags": ["literal"], "text": "I am cold. Give me a blanket.", "topic": "comfort"}
+{"id": "aut-020", "set": "autistic_style", "style_tags": ["low_hedging"], "text": "The test results were wrong.", "topic": "feedback"}
+{"id": "aut-021", "set": "autistic_style", "style_tags": ["direct", "info_dense"], "text": "Pay the rent by the 1st or there's a late fee.", "topic": "money"}
+{"id": "aut-022", "set": "autistic_style", "style_tags": ["literal"], "text": "I don't like loud noises.", "topic": "preferences"}
+{"id": "aut-023", "set": "autistic_style", "style_tags": ["direct"], "text": "Answer the question I asked.", "topic": "feedback"}
+{"id": "aut-024", "set": "autistic_style", "style_tags": ["info_dense"], "text": "The flight is delayed two hours, new departure 6pm.", "topic": "travel"}
+{"id": "aut-025", "set": "autistic_style", "style_tags": ["literal", "direct"], "text": "I am tired. I need to sleep.", "topic": "health"}
+{"id": "aut-026", "set": "autistic_style", "style_tags": ["low_hedging"], "text": "This recipe needs more salt.", "topic": "food"}
+{"id": "aut-027", "set": "autistic_style", "style_tags": ["direct"], "text": "I disagree with your decision.", "topic": "feedback"}
+{"id": "aut-028", "set": "autistic_style", "style_tags": ["literal"], "text": "My hands are shaking.", "topic": "health"}
+{"id": "aut-029", "set": "autistic_style", "style_tags": ["info_dense", "direct"], "text": "The store closes at 9, we have one hour.", "topic": "scheduling"}
+{"id": "aut-030", "set": "autistic_style", "style_tags": ["literal"], "text": "The light is too bright.", "topic": "comfort"}
+{"id": "aut-031", "set": "autistic_style", "style_tags": ["direct", "low_hedging"], "text": "Fix the typo in line 3.", "topic": "work feedback"}
+{"id": "aut-032", "set": "autistic_style", "style_tags": ["info_dense"], "text": "Take exit 12, then merge onto Route 9 north.", "topic": "directions"}
+{"id": "aut-033", "set": "autistic_style", "style_tags": ["literal"], "text": "I need the bathroom now.", "topic": "health"}
+{"id": "aut-034", "set": "autistic_style", "style_tags": ["direct"], "text": "That joke wasn't funny.", "topic": "feedback"}
+{"id": "aut-035", "set": "autistic_style", "style_tags": ["low_hedging", "direct"], "text": "The printer is broken. Use the other one.", "topic": "work"}
+{"id": "aut-036", "set": "autistic_style", "style_tags": ["literal"], "text": "I want water, not juice.", "topic": "food"}
+{"id": "aut-037", "set": "autistic_style", "style_tags": ["info_dense"], "text": "Class starts Monday at 9am in building C.", "topic": "scheduling"}
+{"id": "aut-038", "set": "autistic_style", "style_tags": ["direct"], "text": "Give me the remote.", "topic": "requests"}
+{"id": "aut-039", "set": "autistic_style", "style_tags": ["literal", "low_hedging"], "text": "This chair is uncomfortable.", "topic": "comfort"}
+{"id": "aut-040", "set": "autistic_style", "style_tags": ["direct", "info_dense"], "text": "The invoice is $450, due in 30 days.", "topic": "money"}
+{"id": "aut-041", "set": "autistic_style", "style_tags": ["literal"], "text": "I don't understand the instructions.", "topic": "feedback"}
+{"id": "aut-042", "set": "autistic_style", "style_tags": ["direct"], "text": "Wait here. I'll be back in five minutes.", "topic": "social plans"}
+{"id": "aut-043", "set": "autistic_style", "style_tags": ["info_dense", "literal"], "text": "The dose is 500mg twice daily with food.", "topic": "medical"}
+{"id": "aut-044", "set": "autistic_style", "style_tags": ["low_hedging"], "text": "That answer is incorrect.", "topic": "feedback"}
+{"id": "aut-045", "set": "autistic_style", "style_tags": ["direct"], "text": "I need a ride at 6pm.", "topic": "transport"}
+{"id": "aut-046", "set": "autistic_style", "style_tags": ["literal"], "text": "My headphones are broken.", "topic": "technology"}
+{"id": "aut-047", "set": "autistic_style", "style_tags": ["info_dense", "direct"], "text": "The password has to be 8 characters with a number.", "topic": "technology"}
+{"id": "aut-048", "set": "autistic_style", "style_tags": ["literal"], "text": "I feel overwhelmed right now.", "topic": "health"}
+{"id": "aut-049", "set": "autistic_style", "style_tags": ["direct", "low_hedging"], "text": "Cancel the appointment for tomorrow.", "topic": "scheduling"}
+{"id": "aut-050", "set": "autistic_style", "style_tags": ["literal", "direct"], "text": "I want to go home now.", "topic": "social plans"}
