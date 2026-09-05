@@ -52,16 +52,87 @@ from compress import _is_content, _nlp  # noqa: E402  (one definition of "conten
 HEDGE_FILE = config.ROOT / "src" / "hedges.txt"
 FIRST_PERSON = {"i", "me", "my", "mine", "myself"}
 
-# D7 rubric: an ordered ladder of increasing severity. `code` takes one of these
-# numbers, `notes` is free text. Frozen 2026-09-05, before any generation run existed.
+# D7 rubric: an ordered ladder of increasing severity, coded worst-wins (one code per
+# item). Frozen 2026-09-05, before any generation run existed. `notes` is mandatory for
+# any code above `faithful` -- that is where the multi-label information is recovered
+# qualitatively, and where the paper's examples come from.
 HANDCODE_CATEGORIES = {
-    1: "faithful expansion",
-    2: "benign filler",
-    3: "unlicensed new content",
-    4: "tone/stance shift",
-    5: "meaning reversal",
+    1: "faithful",
+    2: "filler",
+    3: "unlicensed",
+    4: "tone_shift",
+    5: "reversal",
 }
 HANDCODE_COLUMNS = ["code", "notes"]
+
+# Multiple comparisons (D10): six tests per model. Holm-Bonferroni is reported
+# alongside raw p, and the confirmatory headline test is the composite below.
+BOOTSTRAP_N = 2000
+
+
+def holm(pvalues: list[float]) -> list[float]:
+    """Holm-Bonferroni step-down adjusted p-values, in the input order."""
+    import numpy as np
+
+    p = np.asarray(pvalues, dtype=float)
+    order = np.argsort(p)
+    m = len(p)
+    adjusted = np.empty(m)
+    running = 0.0
+    for rank, idx in enumerate(order):
+        running = max(running, (m - rank) * p[idx])
+        adjusted[idx] = min(running, 1.0)
+    return adjusted.tolist()
+
+
+def bootstrap_rank_biserial(diffs, n_boot: int = BOOTSTRAP_N) -> tuple[float, float]:
+    """Percentile CI for the matched-pairs rank-biserial correlation (seeded)."""
+    import numpy as np
+    from scipy import stats
+
+    d = np.asarray([x for x in diffs if x == x], dtype=float)
+    if len(d) < 6:
+        return float("nan"), float("nan")
+    rng = np.random.default_rng(config.SEED)
+    estimates = []
+    for _ in range(n_boot):
+        sample = rng.choice(d, size=len(d), replace=True)
+        nz = sample[sample != 0]
+        if len(nz) < 2:
+            continue
+        ranks = stats.rankdata(np.abs(nz))
+        r_pos, r_neg = ranks[nz > 0].sum(), ranks[nz < 0].sum()
+        estimates.append((r_pos - r_neg) / (r_pos + r_neg))
+    if len(estimates) < 100:
+        return float("nan"), float("nan")
+    return (float(np.percentile(estimates, 2.5)),
+            float(np.percentile(estimates, 97.5)))
+
+
+def drift_composite(df):
+    """D5 composite: mean z-scored magnitude of change across the five features.
+
+    Drift is defined direction-agnostically as distance from "no change" -- |ratio - 1|
+    for length_ratio and |delta| for the four delta features -- so the composite needs
+    no sign-alignment judgement. Each component is z-scored across the whole run before
+    averaging, so features on different scales contribute equally. Components that are
+    entirely NaN (e.g. hedge_rate with no lexicon) drop out.
+    """
+    import numpy as np
+
+    parts = []
+    for col, ref in [("length_ratio", 1.0), ("d_lexical_density", 0.0),
+                     ("d_hedge_rate", 0.0), ("d_first_person_rate", 0.0),
+                     ("d_type_token_ratio", 0.0)]:
+        if col not in df.columns or not df[col].notna().any():
+            continue
+        magnitude = (df[col] - ref).abs()
+        sd = magnitude.std()
+        if sd and sd == sd:
+            parts.append((magnitude - magnitude.mean()) / sd)
+    if not parts:
+        return None
+    return sum(parts) / len(parts)
 
 PAIR_ID_RE = re.compile(r"(\d+)")
 
@@ -301,12 +372,20 @@ def main() -> None:
         print(f"paired stats exclude {n_dropped} refusal_like row(s) "
               "(--include-refusals to keep them)")
 
+    composite = drift_composite(analysed)
+    if composite is not None:
+        analysed = analysed.copy()
+        analysed["drift_composite"] = composite
+        df["drift_composite"] = drift_composite(df)
+
     metric_cols = ["fidelity_cosine", "length_ratio"] + [
         f"d_{f}" for f in ("lexical_density", "hedge_rate", "first_person_rate",
                            "type_token_ratio")
     ]
     if "unentailed_rate" in analysed.columns:
         metric_cols.append("unentailed_rate")
+    if "drift_composite" in analysed.columns:
+        metric_cols.append("drift_composite")
 
     # average the k samples first, so one item contributes one value
     per_item = (analysed.groupby(["model", "set", "pair_id"], dropna=True)[metric_cols]
@@ -330,19 +409,34 @@ def main() -> None:
                 continue
             diffs = (a - c).to_numpy()
             res = wilcoxon_paired(diffs)
+            lo, hi = bootstrap_rank_biserial(diffs)
             stat_rows.append({
                 "model": model, "metric": metric,
+                # the composite is the one confirmatory test (D10); the rest are
+                # exploratory and carry the Holm-adjusted column
+                "role": "confirmatory" if metric == "drift_composite" else "exploratory",
                 "median_autistic": float(np.nanmedian(a)),
                 "median_control": float(np.nanmedian(c)),
                 **res,
+                "rank_biserial_ci_low": lo, "rank_biserial_ci_high": hi,
             })
     if skipped:
         print(f"paired stats skipped (no data): {', '.join(sorted(skipped))}")
     if stat_rows:
+        stats_df = pd.DataFrame(stat_rows)
+        # Holm family = the exploratory tests within one model (D10). The confirmatory
+        # composite is one pre-specified test and is not corrected.
+        stats_df["p_holm"] = float("nan")
+        for model, sub in stats_df.groupby("model"):
+            expl = sub[(sub["role"] == "exploratory") & sub["p"].notna()]
+            if len(expl):
+                stats_df.loc[expl.index, "p_holm"] = holm(expl["p"].tolist())
         stats_path = args.out_dir / f"paired_stats_{run_id}.csv"
-        pd.DataFrame(stat_rows).to_csv(stats_path, index=False, encoding="utf-8")
-        print(f"wrote {stats_path}  ({len(stat_rows)} tests; "
-              "no correction applied -- see D5)")
+        stats_df.to_csv(stats_path, index=False, encoding="utf-8")
+        n_conf = int((stats_df["role"] == "confirmatory").sum())
+        print(f"wrote {stats_path}  ({len(stats_df)} tests: {n_conf} confirmatory "
+              f"(composite, uncorrected), {len(stats_df) - n_conf} exploratory "
+              "with raw and Holm-adjusted p)")
 
     # --- convergence (Agarwal-style) ---
     conv_rows = []
@@ -382,14 +476,17 @@ def main() -> None:
     if "unentailed_clauses" in sample.columns:
         keep += ["n_clauses", "n_unentailed", "unentailed_clauses"]
     sample = sample[keep].copy()
+    # D7 export shape: item_id / condition / model / code / notes, worst-wins.
+    sample = sample.rename(columns={"id": "item_id", "set": "condition"})
     for col in HANDCODE_COLUMNS:
         sample[col] = ""
     hc_path = args.out_dir / f"handcode_sample_{run_id}.csv"
     sample.to_csv(hc_path, index=False, encoding="utf-8")
     print(f"wrote {hc_path}  ({len(sample)} items, stratified by "
           f"{', '.join(s.lstrip('_') for s in strata)}, seed {config.SEED})")
-    print("  D7 codes: "
-          + "; ".join(f"{k}={v}" for k, v in HANDCODE_CATEGORIES.items()))
+    print("  D7 codes (worst-wins): "
+          + ", ".join(f"{k}={v}" for k, v in HANDCODE_CATEGORIES.items()))
+    print("  notes is mandatory for any code above faithful")
 
 
 if __name__ == "__main__":

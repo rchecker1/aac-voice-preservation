@@ -207,13 +207,15 @@ def fig_additions(df, out_dir, plt, handcodes=None):
 
     if handcodes is not None:
         ax = axes[0][1]
-        codes = sorted(HANDCODE_CATEGORIES)
+        codes = sorted(HANDCODE_CATEGORIES)  # 1..5, ordinal ladder
         width = 0.36
         for j, cond in enumerate(CONDITIONS):
-            sub = handcodes[handcodes["set"] == cond]
+            sub = handcodes[handcodes["condition"] == cond]
             if not len(sub):
                 continue
-            rates = [(sub["code"] == code).mean() for code in codes]
+            rates = [(sub["code"] == HANDCODE_CATEGORIES[code]).mean()
+                     if sub["code"].dtype == object else
+                     (sub["code"] == code).mean() for code in codes]
             xs = np.arange(len(codes)) + (j - 0.5) * width
             ax.bar(xs, rates, width=width * 0.92, color=COND_COLOR[cond],
                    alpha=0.85, linewidth=0)
@@ -264,6 +266,47 @@ def fig_convergence(conv, out_dir, plt):
     return path
 
 
+def fig_effects(stats, out_dir, plt):
+    """Effect sizes with bootstrap CIs -- what D10 says the reader should weigh."""
+    import numpy as np
+
+    s = stats[stats["rank_biserial"].notna()].copy()
+    if not len(s):
+        return None
+    models = sorted(s["model"].unique())
+    fig, axes = plt.subplots(1, len(models), figsize=(4.6 * len(models), 4.0),
+                             squeeze=False, sharex=True)
+    for i, model in enumerate(models):
+        ax = axes[0][i]
+        sub = s[s["model"] == model].iloc[::-1].reset_index(drop=True)
+        for y, row in sub.iterrows():
+            confirmatory = row.get("role") == "confirmatory"
+            color = INK if confirmatory else BLUE
+            lo, hi = row["rank_biserial_ci_low"], row["rank_biserial_ci_high"]
+            if lo == lo:
+                ax.plot([lo, hi], [y, y], color=color, linewidth=2.0, alpha=0.5,
+                        solid_capstyle="round", zorder=2)
+            ax.scatter([row["rank_biserial"]], [y], s=46 if confirmatory else 34,
+                       color=color, marker="D" if confirmatory else "o", zorder=3)
+        ax.axvline(0, color=BASELINE, linewidth=1.0, linestyle=(0, (4, 3)), zorder=1)
+        ax.set_yticks(np.arange(len(sub)))
+        ax.set_yticklabels([f"{r['metric']}{' *' if r.get('role') == 'confirmatory' else ''}"
+                            for _, r in sub.iterrows()], fontsize=8, color=INK_2)
+        ax.set_title(model, loc="left", pad=10)
+        ax.set_xlabel("rank-biserial effect size\n(< 0 = control changes more)")
+        ax.xaxis.grid(True)
+        ax.set_axisbelow(True)
+        ax.set_xlim(-1.05, 1.05)
+    fig.suptitle("Effect sizes with 95% bootstrap CIs "
+                 "(diamond * = pre-specified confirmatory test)",
+                 x=0.02, ha="left", fontsize=10, color=INK)
+    fig.tight_layout(rect=(0, 0, 1, 0.94))
+    path = out_dir / "effect_sizes.png"
+    fig.savefig(path)
+    plt.close(fig)
+    return path
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--in", dest="in_path", required=True, type=Path,
@@ -283,9 +326,9 @@ def main() -> None:
     handcodes = None
     if args.handcodes and args.handcodes.exists():
         hc = pd.read_csv(args.handcodes)
-        hc = hc[pd.to_numeric(hc.get("code"), errors="coerce").notna()]
+        hc = hc[hc.get("code").astype(str).str.strip() != ""]
         if len(hc):
-            hc["code"] = hc["code"].astype(int)
+            pass
             handcodes = hc
             print(f"hand codes: {len(hc)} coded rows")
         else:
@@ -298,6 +341,11 @@ def main() -> None:
         args.in_path.name.replace("metrics_", "convergence_"))
     if conv_path.exists():
         made.append(fig_convergence(pd.read_csv(conv_path), out_dir, plt))
+
+    stats_path = args.in_path.with_name(
+        args.in_path.name.replace("metrics_", "paired_stats_"))
+    if stats_path.exists():
+        made.append(fig_effects(pd.read_csv(stats_path), out_dir, plt))
 
     for path in made:
         print(f"wrote {path}" if path else "skipped a figure (no data for it)")
