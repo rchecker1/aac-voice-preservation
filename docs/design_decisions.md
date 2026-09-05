@@ -27,6 +27,17 @@ keeping digits (`8`), though both are NUM. Implemented in `compress.py::_keep`;
 `compress.py` still reports the affected tokens per run as STOPWORD-DROPPED.
 **Rationale:**
 
+**D1b. Politeness markers (decided 2026-09-05).**
+`please` is always kept as a keyword regardless of its POS tag (`ALWAYS_KEEP` in
+`compress.py`). Measured on `data/raw/aac_comm/sent_train_aac.txt`: `please` occurs in
+288/5019 items and spaCy tags it INTJ 261, NOUN 15, VERB 11, ADV 1, AUX 1, so the POS
+rule alone kept it 26/289 times (9%) depending on position. Preserving it is what lets
+RQ3 separate a politeness marker the user authorised from one the model invented.
+Known cost: it consumes one of the four keyword slots. In the toy sentence "Please
+tell the nurse my leg hurts." the slot it costs is `hurts`, the predicate. OPEN: should
+the MAX_KEYWORDS cap count allowlisted markers, or apply to content words only?
+**Rationale:**
+
 ## D2. Models under test
 Options: one local quantized ~8B instruct model only; add a second local model;
 add one frontier API model for contrast (few dollars).

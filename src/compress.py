@@ -40,6 +40,13 @@ import config  # noqa: E402
 SPACY_MODEL = "en_core_web_sm"
 MIN_KEYWORDS = 2  # D1 edge case: fewer than this and the item is excluded
 
+# D1b (RajC, 2026-09-05): politeness markers are kept regardless of POS tag. They are
+# user-authored, so preserving them is what lets RQ3 tell an unlicensed politeness
+# addition apart from a faithfully preserved one. spaCy tags "please" five different
+# ways across the corpus (INTJ 261, NOUN 15, VERB 11, ADV 1, AUX 1 in sent_train_aac),
+# so without this list the rule kept it only 26/289 times, at the tagger's whim.
+ALWAYS_KEEP = {"please"}
+
 _NLP = None
 
 
@@ -71,6 +78,8 @@ def _keep(token) -> bool:
     verbs (go, get, call, give) and number words (three), and dropping those excluded
     39% of the AAC dev corpus for yielding < 2 keywords.
     """
+    if token.text.lower() in ALWAYS_KEEP:  # D1b
+        return True
     return _is_content(token)
 
 
@@ -198,7 +207,9 @@ SELFTEST_CASES = [
     # MAX_KEYWORDS=4 cap, not by the filter.
     ("She bought three red apples at the market yesterday.",
      ["bought", "three", "red", "apples"]),
-    ("Please tell the nurse my leg hurts.", ["tell", "nurse", "leg", "hurts"]),
+    # D1b in tension with the cap: keeping "please" costs a slot, and here the slot it
+    # costs is "hurts" -- the predicate. See the D1b note in docs/design_decisions.md.
+    ("Please tell the nurse my leg hurts.", ["please", "tell", "nurse", "leg"]),
     ("It is raining.", ["raining"]),
     ("Okay.", []),
     ("The meeting has been moved to Thursday because Priya is sick.",
