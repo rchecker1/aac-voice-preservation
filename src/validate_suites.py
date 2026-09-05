@@ -211,6 +211,69 @@ def check_file(path: Path, compress_preview: bool) -> Report:
     return rep
 
 
+def pair_report(paths: list[Path]) -> None:
+    """Manipulation check across the two suites: is each pair actually matched?
+
+    Prints, per pair, the within-pair keyword overlap the model will actually see and
+    the content-word-count gap. High overlap means both halves reach the model as the
+    same input, which is what lets a fidelity difference be attributed to style rather
+    than to content. Reports only -- nothing here edits an item.
+    """
+    import re as _re
+
+    from compress import _is_content, _nlp, compress
+
+    items: dict[str, dict[str, dict]] = {}
+    for path in paths:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            m = _re.search(r"(\d+)", rec.get("id") or "")
+            if m and isinstance(rec.get("text"), str) and isinstance(rec.get("set"), str):
+                items.setdefault(m.group(1), {})[rec["set"]] = rec
+
+    complete = {k: v for k, v in items.items()
+                if "autistic_style" in v and "control_style" in v}
+    print(f"\n=== pair check ===\npairs with both halves: {len(complete)} "
+          f"(of {len(items)} numbered ids)")
+    orphans = sorted(set(items) - set(complete))
+    if orphans:
+        print(f"  UNPAIRED ids (excluded from every paired test): {', '.join(orphans[:20])}")
+    if not complete:
+        return
+
+    overlaps, gaps, weak = [], [], []
+    for pid in sorted(complete):
+        aut, ctl = complete[pid]["autistic_style"], complete[pid]["control_style"]
+        ka, kc = set(compress(aut["text"])), set(compress(ctl["text"]))
+        jac = len(ka & kc) / len(ka | kc) if (ka | kc) else 0.0
+        ca = sum(1 for t in _nlp()(aut["text"]) if _is_content(t))
+        cc = sum(1 for t in _nlp()(ctl["text"]) if _is_content(t))
+        overlaps.append(jac)
+        gaps.append(abs(ca - cc))
+        if jac < 0.5 or abs(ca - cc) > 2:
+            weak.append(f"{pid}: overlap {jac:.2f}, content-word gap {abs(ca - cc)}"
+                        f"  aut={sorted(ka)}  ctl={sorted(kc)}")
+
+    print(f"keyword overlap (Jaccard): mean {statistics.mean(overlaps):.2f}, "
+          f"median {statistics.median(overlaps):.2f}, min {min(overlaps):.2f}")
+    print(f"content-word gap: mean {statistics.mean(gaps):.1f}, max {max(gaps)}")
+    if weak:
+        print(f"\nloosely matched pairs ({len(weak)}) -- overlap < 0.50 or gap > 2.")
+        print("Not errors. Loose matching means the two halves reach the model as")
+        print("different inputs, so a fidelity difference could be content, not style:")
+        for line in weak[:25]:
+            print(f"  {line}")
+        if len(weak) > 25:
+            print(f"  ... and {len(weak) - 25} more")
+    else:
+        print("all pairs matched tightly (overlap >= 0.50, content-word gap <= 2)")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--in", dest="in_path", type=Path,
@@ -236,6 +299,9 @@ def main() -> None:
         rep = check_file(path, compress_preview=not args.no_compress_preview)
         n_err += len(rep.errors)
         n_warn += len(rep.warnings)
+
+    if len(paths) > 1 and not args.no_compress_preview:
+        pair_report(paths)
 
     print(f"\n{len(paths)} file(s): {n_err} error(s), {n_warn} warning(s)")
     raise SystemExit(1 if n_err else 0)
