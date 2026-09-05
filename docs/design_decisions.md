@@ -80,5 +80,10 @@ by condition. You write the rubric and do all coding.
 ## D8 (optional). Suite size + matching
 50–100 items per suite; each autistic-style item gets a matched control of similar
 length/topic. Decide final N based on writing time on Fri.
-**DECISION:**
+**DECISION:** 100 matched pairs (`aut-NNN` / `ctl-NNN`), target set 2026-09-05.
+Matching holds topic and approximate length constant; communication style is the
+variable. Analysis is therefore paired: Wilcoxon signed-rank on within-pair
+differences. Working practice: write each pair together and never leave one half
+finished, so the suites stay balanced and analyzable if writing stops early.
+Cost check: 200 items x 2 models x k=3 = 1,200 generations, ~20 min locally, $0.
 **Rationale:**
