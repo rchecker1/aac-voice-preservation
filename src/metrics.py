@@ -519,11 +519,18 @@ def main() -> None:
 
     # --- hand-coding export (D7) ---
     rng = np.random.default_rng(config.SEED)
+    # At most one generation per (item, model): the k samples of an item are often
+    # byte-identical, so drawing several wastes coding effort on the same string and
+    # double-weights that item in the code distribution. One draw per cell, seeded,
+    # maximises item coverage instead.
+    pool = (df.groupby(["id", "model"], dropna=False, group_keys=False)
+            .sample(n=1, random_state=config.SEED)
+            .reset_index(drop=True))
     strata = ["set", "model"]
-    if "n_unentailed" in df.columns:
-        df["_flagged"] = df["n_unentailed"] > 0
+    if "n_unentailed" in pool.columns:
+        pool["_flagged"] = pool["n_unentailed"] > 0
         strata.append("_flagged")
-    groups = [g for _, g in df.groupby(strata, dropna=False)]
+    groups = [g for _, g in pool.groupby(strata, dropna=False)]
     per_group = max(1, config.HANDCODE_SAMPLE_SIZE // max(len(groups), 1))
     picks = []
     for g in groups:
