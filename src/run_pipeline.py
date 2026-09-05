@@ -71,6 +71,8 @@ def main() -> None:
                         help="a filled-in hand-coding CSV, for the D7 figure panel")
     parser.add_argument("--skip-validation", action="store_true",
                         help="do not gate on validate_suites.py (not for the real run)")
+    parser.add_argument("--strip-register", action="store_true",
+                        help="D1b alt: strip hedge/politeness terms before the cap")
     parser.add_argument("--suites-dir", type=Path, default=config.DATA_SUITES,
                         help="where the suite JSONL files live (default data/suites); "
                              "override only for rehearsals against fixture data")
@@ -96,10 +98,13 @@ def main() -> None:
     print(f"\ncollected {n_items} items from {', '.join(names)} -> {inputs}")
 
     compressed = out_dir / "compressed.jsonl"
-    run_stage("1. compress", [
+    compress_argv = [
         str(SRC / "compress.py"), "--in", str(inputs), "--out", str(compressed),
         "--report", str(out_dir / f"compress_report_{run_id}.json"),
-    ])
+    ]
+    if args.strip_register:
+        compress_argv.append("--strip-register")
+    run_stage("1. compress", compress_argv)
 
     gen_argv = [str(SRC / "generate.py"), "--in", str(compressed),
                 "--out-dir", str(out_dir), "--run-id", run_id]
@@ -121,6 +126,7 @@ def main() -> None:
     manifest = {
         "run_id": run_id,
         "mode": "smoke" if args.smoke else "full",
+        "strip_register": args.strip_register,
         "suite_files": names,
         "n_input_items": n_items,
         "artifacts": sorted(p.name for p in out_dir.iterdir()),

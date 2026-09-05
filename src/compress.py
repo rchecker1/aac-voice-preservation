@@ -47,6 +47,41 @@ MIN_KEYWORDS = 2  # D1 edge case: fewer than this and the item is excluded
 # so without this list the rule kept it only 26/289 times, at the tagger's whim.
 ALWAYS_KEEP = {"please"}
 
+# Alternative D1b reading, selected with --strip-register: politeness and hedge
+# markers are register, not proposition, and are removed BEFORE the cap applies, so
+# they never compete with content for the four slots. Consequence to state in Methods:
+# matched pairs then compress to near-identical keyword sets, so the model receives
+# one bottleneck and produces one expansion which is scored against two differently
+# styled sources. Cost: RQ3 can no longer tell an authored politeness marker from an
+# invented one, which is the argument that motivated the default mode.
+POLITENESS = {"please", "sorry", "thanks", "thank"}
+HEDGE_FILE = ROOT_HEDGES = Path(__file__).resolve().parent / "hedges.txt"
+
+
+def load_register_terms() -> tuple[set[str], list[tuple[str, ...]]]:
+    """Single-token and multi-token register terms from hedges.txt, plus politeness."""
+    singles, phrases = set(POLITENESS), []
+    if HEDGE_FILE.exists():
+        for line in HEDGE_FILE.read_text(encoding="utf-8").splitlines():
+            term = line.split("#", 1)[0].strip().lower()
+            if not term:
+                continue
+            parts = tuple(term.split())
+            (singles.add(parts[0]) if len(parts) == 1 else phrases.append(parts))
+    return singles, sorted(phrases, key=len, reverse=True)  # longest match first
+
+
+def _register_mask(doc, singles: set[str], phrases: list[tuple[str, ...]]) -> set[int]:
+    """Indices of tokens covered by a register term (single word or phrase)."""
+    words = [t.text.lower() for t in doc]
+    masked = {i for i, w in enumerate(words) if w in singles}
+    for phrase in phrases:
+        n = len(phrase)
+        for i in range(len(words) - n + 1):
+            if tuple(words[i:i + n]) == phrase:
+                masked.update(range(i, i + n))
+    return masked
+
 _NLP = None
 
 
@@ -83,10 +118,19 @@ def _keep(token) -> bool:
     return _is_content(token)
 
 
-def compress(text: str, max_keywords: int = config.MAX_KEYWORDS) -> list[str]:
-    """Full utterance -> ordered list of at most max_keywords lowercased keywords."""
+def compress(text: str, max_keywords: int = config.MAX_KEYWORDS,
+             strip_register: bool = False) -> list[str]:
+    """Full utterance -> ordered list of at most max_keywords lowercased keywords.
+
+    strip_register=False (default, D1b as decided): politeness markers are kept and
+    count against the cap. strip_register=True: register terms are removed first.
+    """
     doc = _nlp()(text)
-    return [t.text.lower() for t in doc if _keep(t)][:max_keywords]
+    if not strip_register:
+        return [t.text.lower() for t in doc if _keep(t)][:max_keywords]
+    masked = _register_mask(doc, *load_register_terms())
+    return [t.text.lower() for t in doc
+            if t.i not in masked and _is_content(t)][:max_keywords]
 
 
 # --- diagnostics: surface the consequences of the D1 wording, never change it ---
@@ -125,7 +169,8 @@ def _write_jsonl(path: Path, records: list[dict]) -> None:
             fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
 
 
-def run_file(in_path: Path, out_path: Path, max_keywords: int) -> dict:
+def run_file(in_path: Path, out_path: Path, max_keywords: int,
+             strip_register: bool = False) -> dict:
     records = _read_jsonl(in_path)
     kept: list[dict] = []
     excluded: list[dict] = []
@@ -137,7 +182,7 @@ def run_file(in_path: Path, out_path: Path, max_keywords: int) -> dict:
         if "text" not in rec:
             raise SystemExit(f"{in_path}: record {rec.get('id', '?')} has no text field")
         text = rec["text"]
-        keywords = compress(text, max_keywords)
+        keywords = compress(text, max_keywords, strip_register)
         stopword_drops.update(stopword_dropped_content(text))
         if duplicate_keywords(text, max_keywords):
             dup_items.append(str(rec.get("id", "?")))
@@ -187,6 +232,7 @@ def run_file(in_path: Path, out_path: Path, max_keywords: int) -> dict:
         "max_keywords": max_keywords,
         "min_keywords": MIN_KEYWORDS,
         "spacy_model": SPACY_MODEL,
+        "strip_register": strip_register,
     }
 
 
@@ -236,6 +282,8 @@ def main() -> None:
     parser.add_argument("--in", dest="in_path", type=Path, help="input JSONL")
     parser.add_argument("--out", dest="out_path", type=Path, help="output JSONL")
     parser.add_argument("--max-keywords", type=int, default=config.MAX_KEYWORDS)
+    parser.add_argument("--strip-register", action="store_true",
+                        help="remove hedge/politeness terms before the cap (D1b alt)")
     parser.add_argument("--report", type=Path, help="write run stats as JSON")
     parser.add_argument("--selftest", action="store_true",
                         help="run the toy-sentence self-test and exit")
@@ -246,7 +294,8 @@ def main() -> None:
     if not args.in_path or not args.out_path:
         parser.error("--in and --out are required (or use --selftest)")
 
-    stats = run_file(args.in_path, args.out_path, args.max_keywords)
+    stats = run_file(args.in_path, args.out_path, args.max_keywords,
+                     args.strip_register)
     if args.report:
         args.report.parent.mkdir(parents=True, exist_ok=True)
         args.report.write_text(json.dumps(stats, indent=2), encoding="utf-8")
