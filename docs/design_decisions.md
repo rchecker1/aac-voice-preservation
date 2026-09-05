@@ -57,8 +57,8 @@ triples volume. Compute is cheap either way.
 ## D4. Semantic fidelity metric (RQ1)
 Sentence-embedding cosine (e.g., all-mpnet-base-v2) as primary; BERTScore as
 secondary; report both or one. Keep primary metric singular and defensible.
-**DECISION:** embedding cosine with all-mpnet-base-v2 as primary; BERTScore secondary
-only if time allows.
+**DECISION:** embedding cosine with all-mpnet-base-v2 as primary. BERTScore dropped
+2026-09-05 (scope cut); the primary metric stands alone.
 **Rationale:**
 
 ## D5. Style-drift features (RQ2)
@@ -131,10 +131,12 @@ by condition. You write the rubric and do all coding.
 ## D8 (optional). Suite size + matching
 50–100 items per suite; each autistic-style item gets a matched control of similar
 length/topic. Decide final N based on writing time on Fri.
-**DECISION:** 100 matched pairs (`aut-NNN` / `ctl-NNN`), target set 2026-09-05.
+**DECISION:** 50 matched pairs (`aut-NNN` / `ctl-NNN`). Revised down from 100 on
+2026-09-05 to protect the writing days (PLAN.md standing rule: cut scope, not
+writing). 50 pairs still supports the paired test at a medium effect size.
 Matching holds topic and approximate length constant; communication style is the
 variable. Analysis is therefore paired: Wilcoxon signed-rank on within-pair
 differences. Working practice: write each pair together and never leave one half
 finished, so the suites stay balanced and analyzable if writing stops early.
-Cost check: 200 items x 2 models x k=3 = 1,200 generations, ~20 min locally, $0.
+Cost check: 100 items x 2 models x k=3 = 600 generations, ~10 min locally, $0.
 **Rationale:**

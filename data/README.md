@@ -6,7 +6,12 @@
 - No scraping of community spaces (Reddit, X, forums, Discord).
 - Every source's license/terms recorded in `data/raw/SOURCES.md`.
 
-## Set 1 — neutral AAC-like phrases (`data/raw/`)
+## Set 1 — neutral AAC-like phrases (`data/raw/`) — DROPPED 2026-09-05
+Cut for scope. The finding rests on the autistic-style vs. control contrast in
+Set 2, which does not need a neutral third condition. The corpus stays in
+`data/raw/` and was used only to calibrate the compression rule (D1a, D1b).
+Original plan, kept for the record:
+
 Primary: the crowdsourced AAC-like phrase collection from Vertanen & Kristensson
 (EMNLP 2011) — check the authors' data pages (Keith Vertanen hosts AAC research
 datasets) and the paper for access; widely used in AAC text-entry research.

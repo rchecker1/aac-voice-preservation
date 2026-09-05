@@ -36,4 +36,4 @@ STYLE_FEATURES = [  # D5: plus Agarwal-style convergence analysis (metrics.py)
     "first_person_rate",
     "type_token_ratio",
 ]
-HANDCODE_SAMPLE_SIZE = 150  # items exported for RajC's hand-coding (D7)
+HANDCODE_SAMPLE_SIZE = 100  # items exported for RajC's hand-coding (D7; cut from 150)

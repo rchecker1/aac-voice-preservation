@@ -26,11 +26,13 @@ Legend: **[YOU]** = RajC only (the parts that make the work yours and keep it va
       byte-identical output.
 
 ## Sat Sept 6 — run everything + human judgment
-- [ ] **[CC]** `metrics.py`: fidelity, style-drift features, NLI additions flags.
+- [x] **[CC]** `metrics.py`: fidelity, style-drift features, NLI additions flags.
 - [ ] **[YOU]** Spot-check 20 outputs by eye before trusting any number.
 - [ ] **[YOU]** Write the additions coding rubric (D7) and hand-code the sampled
       100–200 expansion items exported by `metrics.py`.
-- [ ] **[CC]** Figures: fidelity distributions; drift by condition; additions rates.
+- [x] **[CC]** Figures: fidelity distributions; drift by condition; additions rates.
+      (`srcigures.py`; `srcun_pipeline.py --full` chains every stage. Rehearsed
+      end to end on fixture data: 100 items -> 600 generations -> 4 figures in ~1 min.)
 - [ ] **[YOU]** Write down, in plain sentences, what the results actually show.
 
 ## Sun Sept 7 — write (target: full draft tonight)

@@ -38,13 +38,33 @@ KEYWORD_JOIN = " "
 MAX_RETRIES = 4
 RETRY_BACKOFF_S = 2.0
 
-# Refusal-shaped prefixes/markers. These only set a flag for review -- the output is
-# stored verbatim either way (cf. the failure modes in docs/related_work.md).
+# Refusal markers, deliberately narrow: phrases in which the model talks about ITSELF
+# declining the task, not ordinary first-person sentences. An earlier, looser list
+# flagged "I love you, but I'm not able to feed you right now, I'm truly sorry" as a
+# refusal -- a faithful expansion of the keywords love/sorry/able/feed. Because
+# metrics.py drops refusal_like rows from the paired statistics by default, such false
+# positives would preferentially delete apologetic, softened expansions, which is a
+# bias aimed straight at the hypothesis under test.
 REFUSAL_MARKERS = (
-    "i'm sorry", "i am sorry", "i apologize", "i cannot", "i can't", "i can not",
-    "as an ai", "i'm not able", "i am not able", "i'm unable", "i am unable",
-    "sorry, but", "cannot assist", "can't assist", "cannot help with",
+    "as an ai", "as a language model", "i cannot assist", "i can't assist",
+    "cannot help with that", "can't help with that", "i cannot provide",
+    "i can't provide", "i cannot fulfill", "i can't fulfill", "i cannot generate",
+    "i can't generate", "i cannot comply", "i'm not able to help",
+    "i am not able to help", "i cannot create", "i can't create",
 )
+
+# Second gate: a genuine refusal ignores the user's words. If most of the keywords
+# survive into the output, it is an expansion, whatever phrases it happens to contain.
+REFUSAL_KEYWORD_COVERAGE = 0.5
+
+
+def keyword_coverage(text: str, keywords: list[str]) -> float:
+    """Share of keywords that appear in the output (prefix match, case-insensitive)."""
+    if not keywords:
+        return 0.0
+    low = text.lower()
+    hits = sum(1 for k in keywords if k.lower()[:4] in low)
+    return hits / len(keywords)
 
 
 def run_id_now() -> str:
@@ -72,9 +92,12 @@ def clean_output(text: str) -> str:
     return out
 
 
-def looks_like_refusal(text: str) -> bool:
+def looks_like_refusal(text: str, keywords: list[str]) -> bool:
+    """Meta-refusal phrasing AND the user's keywords largely absent."""
     low = text.strip().lower()
-    return any(low.startswith(m) or m in low[:120] for m in REFUSAL_MARKERS)
+    if not any(m in low for m in REFUSAL_MARKERS):
+        return False
+    return keyword_coverage(text, keywords) < REFUSAL_KEYWORD_COVERAGE
 
 
 def seed_for(sample_idx: int) -> int:
@@ -222,7 +245,8 @@ def main() -> None:
                         seed = seed_for(sample_idx)
                         raw, latency = call_model(client, model["name"], prompt, seed)
                         expansion = clean_output(raw)
-                        refusal = looks_like_refusal(expansion)
+                        refusal = looks_like_refusal(expansion, rec["keywords"])
+                        coverage = keyword_coverage(expansion, rec["keywords"])
                         n_refusal += refusal
                         fh.write(json.dumps({
                             "run_id": run_id,
@@ -241,6 +265,7 @@ def main() -> None:
                             "expansion": expansion,
                             "expansion_raw": raw,
                             "refusal_like": refusal,
+                            "keyword_coverage": round(coverage, 3),
                             "latency_s": round(latency, 3),
                         }, ensure_ascii=False) + "\n")
                         fh.flush()
