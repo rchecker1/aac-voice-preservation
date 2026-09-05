@@ -59,6 +59,29 @@ similarity of expansions within/across conditions). Pick 4–6 features max.
 **DECISION:** five features — length ratio, lexical density, hedge rate, first-person
 rate, type-token ratio — plus the Agarwal-style convergence analysis.
 **Rationale:**
+- *Hedge rate:* hedges are exactly what a system adds when it's softening a blunt
+  message; if expansions consistently gain hedges the original keywords didn't
+  license, that's the model overwriting a direct communication style with a more
+  conventionally 'polite' one.
+- *Length ratio:* padding terse input takes away its terseness itself: brevity can be
+  a stylistic choice, not a deficiency to fix, and a system that reflexively lengthens
+  short input is treating economy of expression as something to correct rather than
+  preserve.
+- *First-person / social-framing rate:* it tracks whether the model is inserting
+  relational or affective framing (apologies, softeners, "I just wanted to...") that
+  wasn't in the keywords, which is one of the clearest signatures of
+  neurotypical-style rewriting.
+- *Lexical density:* what's lost when info-dense phrasing flattens is precision:
+  literal, information-packed keyword input can get diluted into looser, more
+  conversational phrasing, trading exactness for a more "natural-sounding" register.
+- *Convergence:* if outputs from stylistically distinct inputs start looking more
+  alike than the inputs did, the model isn't expanding each voice on its own terms,
+  it's funneling everything toward one default register — evidence of homogenization
+  rather than faithful expansion.
+- *These five and not others:* each is a documented, citable feature of communication
+  style, each is computable from text alone without a model or human judging 'tone',
+  and each has a clear predicted direction (up or down) if neurotypical-normalizing
+  drift is happening — so the metrics are falsifiable, not just descriptive.
 
 ## D6. Unlicensed-additions detection (RQ3)
 NLI-based flag: expansion clauses not entailed by source utterance (model:
@@ -74,8 +97,25 @@ Draft categories to refine: (1) faithful expansion, (2) benign filler (politenes
 padding), (3) new factual content, (4) stance/tone change (e.g., hedged, softened,
 made "nicer"), (5) meaning reversal. Code 100–200 items; report per-category rates
 by condition. You write the rubric and do all coding.
-**DECISION:**
+**DECISION:** five ordered categories, treated as a ladder of increasing severity:
+(1) faithful expansion → (2) benign filler → (3) unlicensed new content →
+(4) tone/stance shift → (5) meaning reversal. Frozen before any coding begins.
 **Rationale:**
+- *Why the categories run faithful → filler → unlicensed content → tone shift →
+  reversal:* it's a ladder, not a flat list, because each step is a strictly worse
+  failure mode in terms of fidelity to intent: filler is harmless noise, unlicensed
+  content adds meaning that wasn't there, tone shift changes how the message lands
+  without changing its content, and reversal actually inverts the speaker's intent —
+  ordering them lets you report not just how often the system fails but how badly.
+- *Why the tone-shift category matters most:* this is the thesis: it's the category
+  where the words are technically 'right' but the register has been quietly rewritten
+  toward neurotypical norms, and because nothing is factually wrong, this is exactly
+  the failure mode a purely semantic-similarity or accuracy metric would miss
+  entirely.
+- *Why the rubric is frozen before coding:* it prevents you from unconsciously
+  adjusting category boundaries once you've seen which examples look bad, which would
+  let your hypothesis (autistic-style inputs drift more) shape the very labels meant
+  to test it.
 
 ## D8 (optional). Suite size + matching
 50–100 items per suite; each autistic-style item gets a matched control of similar

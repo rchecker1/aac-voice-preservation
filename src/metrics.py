@@ -52,8 +52,15 @@ from compress import _is_content, _nlp  # noqa: E402  (one definition of "conten
 HEDGE_FILE = config.ROOT / "src" / "hedges.txt"
 FIRST_PERSON = {"i", "me", "my", "mine", "myself"}
 
-# D7 is not decided yet, so the export ships a free-text code column plus notes.
-# When RajC fixes the rubric categories, list them here and they become the columns.
+# D7 rubric: an ordered ladder of increasing severity. `code` takes one of these
+# numbers, `notes` is free text. Frozen 2026-09-05, before any generation run existed.
+HANDCODE_CATEGORIES = {
+    1: "faithful expansion",
+    2: "benign filler",
+    3: "unlicensed new content",
+    4: "tone/stance shift",
+    5: "meaning reversal",
+}
 HANDCODE_COLUMNS = ["code", "notes"]
 
 PAIR_ID_RE = re.compile(r"(\d+)")
@@ -381,8 +388,8 @@ def main() -> None:
     sample.to_csv(hc_path, index=False, encoding="utf-8")
     print(f"wrote {hc_path}  ({len(sample)} items, stratified by "
           f"{', '.join(s.lstrip('_') for s in strata)}, seed {config.SEED})")
-    print("  rubric columns are placeholders until D7 is decided "
-          f"(currently: {', '.join(HANDCODE_COLUMNS)})")
+    print("  D7 codes: "
+          + "; ".join(f"{k}={v}" for k, v in HANDCODE_CATEGORIES.items()))
 
 
 if __name__ == "__main__":
