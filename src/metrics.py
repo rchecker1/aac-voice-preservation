@@ -109,6 +109,12 @@ def bootstrap_rank_biserial(diffs, n_boot: int = BOOTSTRAP_N) -> tuple[float, fl
             float(np.percentile(estimates, 97.5)))
 
 
+def stats_spearman(x, y) -> float:
+    from scipy import stats
+
+    return float(stats.spearmanr(x, y).statistic)
+
+
 def drift_composite(df):
     """D5 composite: mean z-scored magnitude of change across the five features.
 
@@ -361,6 +367,10 @@ def main() -> None:
         rows.append(row)
 
     df = pd.DataFrame(rows)
+    # computed before the CSV is written, so the confirmatory measure is traceable
+    composite_all = drift_composite(df)
+    if composite_all is not None:
+        df["drift_composite"] = composite_all
     metrics_path = args.out_dir / f"metrics_{run_id}.csv"
     df.to_csv(metrics_path, index=False, encoding="utf-8")
     print(f"\nwrote {metrics_path}  ({len(df)} rows)")
@@ -371,12 +381,6 @@ def main() -> None:
     if n_dropped:
         print(f"paired stats exclude {n_dropped} refusal_like row(s) "
               "(--include-refusals to keep them)")
-
-    composite = drift_composite(analysed)
-    if composite is not None:
-        analysed = analysed.copy()
-        analysed["drift_composite"] = composite
-        df["drift_composite"] = drift_composite(df)
 
     metric_cols = ["fidelity_cosine", "length_ratio"] + [
         f"d_{f}" for f in ("lexical_density", "hedge_rate", "first_person_rate",
@@ -420,6 +424,40 @@ def main() -> None:
                 **res,
                 "rank_biserial_ci_low": lo, "rank_biserial_ci_high": hi,
             })
+    # Length-adjusted confirmatory test. Hedged control sources are longer than direct
+    # autistic ones by construction -- hedging IS extra words -- and under a fixed
+    # keyword cap a longer source has further to fall. The composite therefore
+    # correlates with source length, so the same test is repeated on the composite
+    # residualised on source token count, and both rows are reported.
+    if "drift_composite" in analysed.columns and "src_n_tokens" in analysed.columns:
+        for model in sorted(analysed["model"].dropna().unique()):
+            s = analysed[(analysed["model"] == model)].dropna(
+                subset=["drift_composite", "src_n_tokens"])
+            if len(s) < 12:
+                continue
+            slope, intercept = np.polyfit(s["src_n_tokens"], s["drift_composite"], 1)
+            resid = s["drift_composite"] - (intercept + slope * s["src_n_tokens"])
+            per = (s.assign(_r=resid).groupby(["set", "pair_id"])["_r"]
+                   .mean().reset_index())
+            a = per[per["set"] == "autistic_style"].set_index("pair_id")["_r"]
+            c = per[per["set"] == "control_style"].set_index("pair_id")["_r"]
+            shared = sorted(set(a.index) & set(c.index))
+            if not shared:
+                continue
+            diffs = (a.loc[shared] - c.loc[shared]).to_numpy()
+            res = wilcoxon_paired(diffs)
+            lo, hi = bootstrap_rank_biserial(diffs)
+            rho = stats_spearman(s["src_n_tokens"], s["drift_composite"])
+            stat_rows.append({
+                "model": model, "metric": "drift_composite_length_adjusted",
+                "role": "confirmatory",
+                "median_autistic": float(np.nanmedian(a.loc[shared])),
+                "median_control": float(np.nanmedian(c.loc[shared])),
+                **res,
+                "rank_biserial_ci_low": lo, "rank_biserial_ci_high": hi,
+                "spearman_composite_vs_source_length": rho,
+            })
+
     if skipped:
         print(f"paired stats skipped (no data): {', '.join(sorted(skipped))}")
     if stat_rows:
