@@ -1,0 +1,120 @@
+r"""Emit every headline number for one run as a single markdown file.
+
+The point is that Results can be written from one page, and that each number in the
+paper has exactly one place it came from. Nothing here computes anything new -- it
+reads the CSVs metrics.py wrote and formats them. No interpretation, no captions.
+
+Flags two classes of number that must not be reported as findings:
+- effects with a zero-width bootstrap CI at |1.000|, which are produced by the rule
+  rather than found in the data (e.g. hedge rate under --strip-register);
+- the raw composite when it is strongly correlated with source length.
+
+CLI: python src\summarize.py --run results\keep_please
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+
+
+def fmt(x, nd=3) -> str:
+    try:
+        if x != x:
+            return "—"
+        return f"{x:.{nd}f}"
+    except (TypeError, ValueError):
+        return str(x)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--run", required=True, type=Path, help="results/<run_id>/")
+    args = parser.parse_args()
+
+    import pandas as pd
+
+    run_dir = args.run
+    run_id = run_dir.name
+    stats = pd.read_csv(run_dir / f"paired_stats_{run_id}.csv")
+    metrics = pd.read_csv(run_dir / f"metrics_{run_id}.csv")
+    conv = pd.read_csv(run_dir / f"convergence_{run_id}.csv")
+    manifest_path = run_dir / f"manifest_{run_id}.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if \
+        manifest_path.exists() else {}
+
+    out = [f"# Run summary — `{run_id}`", ""]
+    out.append(f"- compression: "
+               f"{'strip-register' if manifest.get('strip_register') else 'keep-please'}")
+    out.append(f"- generations: {len(metrics)}   items: {metrics['id'].nunique()}   "
+               f"models: {metrics['model'].nunique()}")
+    out.append(f"- refusal-flagged: {int(metrics['refusal_like'].sum())}")
+    out.append("")
+
+    # --- confirmatory ---
+    conf = stats[stats["role"] == "confirmatory"]
+    out += ["## Confirmatory test (D5 composite)", "",
+            "Negative effect = control items drift more than autistic-style items.", "",
+            "| model | test | n | rank-biserial | 95% CI | p |", "|---|---|---|---|---|---|"]
+    for _, r in conf.iterrows():
+        primary = "**" if r["metric"].endswith("length_adjusted") else ""
+        ci = f"[{fmt(r['rank_biserial_ci_low'], 2)}, {fmt(r['rank_biserial_ci_high'], 2)}]"
+        out.append(f"| {r['model']} | {primary}{r['metric']}{primary} | {int(r['n_pairs'])} "
+                   f"| {fmt(r['rank_biserial'])} | {ci} | {fmt(r['p'], 4)} |")
+    rho = conf["spearman_composite_vs_source_length"].dropna()
+    if len(rho):
+        out += ["", f"Composite vs source length (Spearman): "
+                    f"{', '.join(fmt(v, 2) for v in rho)}. The length-adjusted row is "
+                    "the primary result (D10)."]
+    out.append("")
+
+    # --- exploratory ---
+    expl = stats[stats["role"] == "exploratory"]
+    out += ["## Exploratory tests (Holm-adjusted within model)", "",
+            "| model | metric | median aut | median ctl | rank-biserial | 95% CI | p | p (Holm) |",
+            "|---|---|---|---|---|---|---|---|"]
+    for _, r in expl.iterrows():
+        ci = f"[{fmt(r['rank_biserial_ci_low'], 2)}, {fmt(r['rank_biserial_ci_high'], 2)}]"
+        out.append(f"| {r['model']} | {r['metric']} | {fmt(r['median_autistic'])} "
+                   f"| {fmt(r['median_control'])} | {fmt(r['rank_biserial'])} | {ci} "
+                   f"| {fmt(r['p'], 4)} | {fmt(r['p_holm'], 4)} |")
+    out.append("")
+
+    # --- convergence ---
+    out += ["## Convergence (positive delta = homogenisation)", "",
+            "| set | model | sources | expansions | delta |", "|---|---|---|---|---|"]
+    for _, r in conv.iterrows():
+        out.append(f"| {r['set']} | {r['model']} "
+                   f"| {fmt(r['mean_pairwise_cosine_sources'], 4)} "
+                   f"| {fmt(r['mean_pairwise_cosine_expansions'], 4)} "
+                   f"| {fmt(r['convergence_delta'], 4)} |")
+    out.append("")
+
+    # --- do-not-report flags ---
+    flags = []
+    for _, r in stats.iterrows():
+        lo, hi = r["rank_biserial_ci_low"], r["rank_biserial_ci_high"]
+        if lo == lo and abs(lo) == 1.0 and lo == hi:
+            flags.append(f"`{r['metric']}` ({r['model']}): effect 1.000 with a "
+                         "zero-width CI — produced by the compression rule, not "
+                         "measured. Do not report as a finding.")
+    if len(rho) and (rho.abs() > 0.3).any():
+        flags.append("Raw `drift_composite` correlates with source length; report the "
+                     "length-adjusted row as primary and both in the table.")
+    if flags:
+        out += ["## Do not report as findings", ""] + [f"- {f}" for f in flags] + [""]
+
+    out += ["---", "",
+            f"Generated by `src/summarize.py` from the CSVs in `{run_dir.as_posix()}`. "
+            "Every number above is in one of those files."]
+
+    path = run_dir / f"summary_{run_id}.md"
+    path.write_text("\n".join(out), encoding="utf-8")
+    print(f"wrote {path}")
+    if flags:
+        print(f"  {len(flags)} do-not-report flag(s)")
+
+
+if __name__ == "__main__":
+    main()

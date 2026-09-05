@@ -38,6 +38,26 @@ tell the nurse my leg hurts." the slot it costs is `hurts`, the predicate. OPEN:
 the MAX_KEYWORDS cap count allowlisted markers, or apply to content words only?
 **Rationale:**
 
+**D1b resolved (2026-09-05).** Politeness markers are KEPT and count against the cap.
+The alternative (`--strip-register`, remove hedge/politeness terms before the cap) is
+implemented and run as an appendix ablation, not as the primary analysis. Keeping them
+means nothing is deleted by construction, so the hedge-rate result is empirical rather
+than definitional: under strip-register `d_hedge_rate` returns rank-biserial 1.000 with
+a zero-width CI, which is the rule restating itself. Primary run: `results/keep_please/`.
+Ablation: `results/strip_register/`.
+**Rationale:**
+
+**D10 (multiple comparisons and the confirmatory test), settled 2026-09-05.**
+Six exploratory tests per model, reported with raw and Holm-adjusted p side by side.
+The confirmatory test is the D5 composite, pre-specified and uncorrected. **The primary
+composite is the length-adjusted one** (`drift_composite_length_adjusted`): the raw
+composite correlates with source length (Spearman 0.59 llama, 0.34 qwen) and control
+sources are longer than autistic ones by construction, since hedging is extra words.
+Both rows are reported. Under the primary run the adjusted effect is
+-0.26 (p = 0.11, llama) and -0.20 (p = 0.22, qwen) -- i.e. no reliable condition
+difference in overall drift once length is accounted for.
+**Rationale:**
+
 ## D2. Models under test
 Options: one local quantized ~8B instruct model only; add a second local model;
 add one frontier API model for contrast (few dollars).
