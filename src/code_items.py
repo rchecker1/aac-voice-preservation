@@ -160,8 +160,17 @@ def main() -> None:
     if remaining <= 0:
         print("\nall done. next:")
         print(f"  python src\\validate_handcoding.py {args.sheet}")
-        print(f"  python src\\summarize.py --run results\\keep_please "
-              f"--handcodes {args.sheet}")
+        if args.sheet.stem.endswith("_coder2"):
+            # this was the reliability subsample; the pair is now codeable
+            primary = args.sheet.with_name(
+                args.sheet.stem[: -len("_coder2")] + args.sheet.suffix)
+            print(f"  python src\\reliability.py alpha --primary {primary} "
+                  f"--secondary {args.sheet}")
+        else:
+            print(f"  python src\\reliability.py draw --sheet {args.sheet}"
+                  "     # codebook step 3: second coder")
+            print(f"  python src\\summarize.py --run results\\keep_please "
+                  f"--handcodes {args.sheet}")
 
 
 if __name__ == "__main__":

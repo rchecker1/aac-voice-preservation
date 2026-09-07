@@ -22,7 +22,6 @@ It's a systems audit: we measure **models**, not people. No human subjects.
 
 ## Repo map
 
-- `CLAUDE.md` — rules for Claude Code sessions in this repo. Read it first.
 - `PLAN.md` — day-by-day schedule to the deadline, with human-only tasks marked.
 - `docs/design_decisions.md` — open methods decisions (RajC decides, then code follows).
 - `docs/related_work.md` — reading list + positioning notes.

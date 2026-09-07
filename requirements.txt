@@ -8,3 +8,7 @@ numpy
 scipy
 matplotlib
 tqdm
+
+# optional, dev only: cross-checks src/reliability.py --self-check against a
+# reference implementation of Krippendorff's alpha. Not needed to run the pipeline.
+# krippendorff
