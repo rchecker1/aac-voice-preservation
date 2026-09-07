@@ -48,11 +48,11 @@ python src\run_pipeline.py --smoke   # tiny end-to-end test once data exists
 
 ## Status
 
-- [ ] Decisions D1–D7 made (`docs/design_decisions.md`)
-- [ ] Neutral AAC-like set acquired (`data/raw/`)
-- [ ] Style suites written by RajC (`data/suites/`)
-- [ ] Pipeline runs end to end
-- [ ] Metrics + figures
-- [ ] Hand-coded additions sample
+- [x] Decisions D1–D7 made (`docs/design_decisions.md`)
+- [x] Neutral AAC-like set acquired (`data/raw/`)
+- [x] Style suites written by RajC (`data/suites/`)
+- [x] Pipeline runs end to end
+- [x] Metrics + figures
+- [x] Hand-coded additions sample (96/96 coded; second-coder α pending)
 - [ ] Draft complete
 - [ ] Submitted

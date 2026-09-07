@@ -16,6 +16,7 @@ Use --no-blind to show labels.
 CLI:
   python src\code_items.py --sheet data\coding\handcode_keep_please.csv --coder RajC
   python src\code_items.py --sheet ... --coder RajC --limit 20     # a session at a time
+  python src\code_items.py --sheet ... --coder RajC --shuffle-seed 11  # recode: fresh order
 """
 
 from __future__ import annotations
@@ -92,6 +93,10 @@ def main() -> None:
     parser.add_argument("--coder", required=True, help="your name, recorded per row")
     parser.add_argument("--limit", type=int, default=None,
                         help="stop after N items this session")
+    parser.add_argument("--shuffle-seed", type=int, default=config.SEED,
+                        help="blinding order seed; use a fresh value when recoding "
+                             "the same sheet against a new codebook version, so the "
+                             "items do not arrive in the order they were first seen")
     parser.add_argument("--no-blind", action="store_true",
                         help="show condition and model labels, and keep sheet order")
     args = parser.parse_args()
@@ -109,7 +114,7 @@ def main() -> None:
     if not args.no_blind:
         import numpy as np
 
-        np.random.default_rng(config.SEED).shuffle(todo)
+        np.random.default_rng(args.shuffle_seed).shuffle(todo)
 
     done_already = len(df) - len(todo)
     if not todo:
