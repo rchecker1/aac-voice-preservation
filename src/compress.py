@@ -55,6 +55,16 @@ ALWAYS_KEEP = {"please"}
 # styled sources. Cost: RQ3 can no longer tell an authored politeness marker from an
 # invented one, which is the argument that motivated the default mode.
 POLITENESS = {"please", "sorry", "thanks", "thank"}
+
+# D14 ablation, selected with --keep-negation: negation is carried by function words,
+# which the D1 content-word rule deletes -- measured at 0/96 keyword sets retaining it
+# on the keep_please run, and 75% of negated sources then hand-coded as `reversal`.
+# This mode keeps negation tokens regardless of POS, before the cap, so the question
+# "does the model restore polarity when the keywords actually carry it?" is separable
+# from "does the compressor destroy polarity?". It is an ablation, not a D1 revision:
+# the default rule is unchanged and both arms are reported.
+NEGATION = {"not", "n't", "no", "never", "none", "neither", "nor", "cannot",
+            "nothing", "nobody", "nowhere", "without"}
 HEDGE_FILE = ROOT_HEDGES = Path(__file__).resolve().parent / "hedges.txt"
 
 
@@ -104,6 +114,12 @@ def _is_content(token) -> bool:
     return token.pos_ in config.KEEP_POS
 
 
+def _is_negation(token) -> bool:
+    """D14: negation by dependency label or surface form. Both, because spaCy tags
+    contracted "n't" as dep_ == "neg" but standalone determiner "no" as det."""
+    return token.dep_ == "neg" or token.text.lower().lstrip("’'") in NEGATION
+
+
 def _keep(token) -> bool:
     """Full D1 filter.
 
@@ -119,7 +135,7 @@ def _keep(token) -> bool:
 
 
 def compress(text: str, max_keywords: int = config.MAX_KEYWORDS,
-             strip_register: bool = False) -> list[str]:
+             strip_register: bool = False, keep_negation: bool = False) -> list[str]:
     """Full utterance -> ordered list of at most max_keywords lowercased keywords.
 
     strip_register=False (default, D1b as decided): politeness markers are kept and
@@ -127,10 +143,12 @@ def compress(text: str, max_keywords: int = config.MAX_KEYWORDS,
     """
     doc = _nlp()(text)
     if not strip_register:
-        return [t.text.lower() for t in doc if _keep(t)][:max_keywords]
+        return [t.text.lower() for t in doc
+                if _keep(t) or (keep_negation and _is_negation(t))][:max_keywords]
     masked = _register_mask(doc, *load_register_terms())
     return [t.text.lower() for t in doc
-            if t.i not in masked and _is_content(t)][:max_keywords]
+            if (t.i not in masked and _is_content(t))
+            or (keep_negation and _is_negation(t))][:max_keywords]
 
 
 # --- diagnostics: surface the consequences of the D1 wording, never change it ---
@@ -170,7 +188,7 @@ def _write_jsonl(path: Path, records: list[dict]) -> None:
 
 
 def run_file(in_path: Path, out_path: Path, max_keywords: int,
-             strip_register: bool = False) -> dict:
+             strip_register: bool = False, keep_negation: bool = False) -> dict:
     records = _read_jsonl(in_path)
     kept: list[dict] = []
     excluded: list[dict] = []
@@ -182,7 +200,7 @@ def run_file(in_path: Path, out_path: Path, max_keywords: int,
         if "text" not in rec:
             raise SystemExit(f"{in_path}: record {rec.get('id', '?')} has no text field")
         text = rec["text"]
-        keywords = compress(text, max_keywords, strip_register)
+        keywords = compress(text, max_keywords, strip_register, keep_negation)
         stopword_drops.update(stopword_dropped_content(text))
         if duplicate_keywords(text, max_keywords):
             dup_items.append(str(rec.get("id", "?")))
@@ -284,6 +302,8 @@ def main() -> None:
     parser.add_argument("--max-keywords", type=int, default=config.MAX_KEYWORDS)
     parser.add_argument("--strip-register", action="store_true",
                         help="remove hedge/politeness terms before the cap (D1b alt)")
+    parser.add_argument("--keep-negation", action="store_true",
+                        help="keep negation tokens regardless of POS (D14 ablation)")
     parser.add_argument("--report", type=Path, help="write run stats as JSON")
     parser.add_argument("--selftest", action="store_true",
                         help="run the toy-sentence self-test and exit")
@@ -295,7 +315,7 @@ def main() -> None:
         parser.error("--in and --out are required (or use --selftest)")
 
     stats = run_file(args.in_path, args.out_path, args.max_keywords,
-                     args.strip_register)
+                     args.strip_register, args.keep_negation)
     if args.report:
         args.report.parent.mkdir(parents=True, exist_ok=True)
         args.report.write_text(json.dumps(stats, indent=2), encoding="utf-8")

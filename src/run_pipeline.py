@@ -71,6 +71,8 @@ def main() -> None:
                         help="a filled-in hand-coding CSV, for the D7 figure panel")
     parser.add_argument("--skip-validation", action="store_true",
                         help="do not gate on validate_suites.py (not for the real run)")
+    parser.add_argument("--keep-negation", action="store_true",
+                        help="D14 ablation: keep negation tokens through compression")
     parser.add_argument("--strip-register", action="store_true",
                         help="D1b alt: strip hedge/politeness terms before the cap")
     parser.add_argument("--suites-dir", type=Path, default=config.DATA_SUITES,
@@ -104,6 +106,8 @@ def main() -> None:
     ]
     if args.strip_register:
         compress_argv.append("--strip-register")
+    if args.keep_negation:
+        compress_argv.append("--keep-negation")
     run_stage("1. compress", compress_argv)
 
     gen_argv = [str(SRC / "generate.py"), "--in", str(compressed),
@@ -127,6 +131,7 @@ def main() -> None:
         "run_id": run_id,
         "mode": "smoke" if args.smoke else "full",
         "strip_register": args.strip_register,
+        "keep_negation": args.keep_negation,
         "suite_files": names,
         "n_input_items": n_items,
         "artifacts": sorted(p.name for p in out_dir.iterdir()),
