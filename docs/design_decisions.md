@@ -160,3 +160,21 @@ differences. Working practice: write each pair together and never leave one half
 finished, so the suites stay balanced and analyzable if writing stops early.
 Cost check: 100 items x 2 models x k=3 = 600 generations, ~10 min locally, $0.
 **Rationale:**
+
+## D15. Locus split for rung-3 `tone_shift` (required analysis)
+The symmetric removal rule is near-deterministic on condition given this
+compressor: autistic sources carry ~no mitigation (1/50), control sources all
+do, so removal-direction `tone_shift` can fire only on control. The
+by-condition tone_shift rate is therefore partly a property of the rubric x
+suite interaction, and reporting it raw would be circular.
+**DECISION:** report `tone_shift` split by locus, computed automatically from
+src/exp hedge rates and keyword hedge content:
+- mitigation cut by the compressor, never seen by the model;
+- mitigation surviving into keywords, dropped by the model;
+- (for additions) mitigation absent from keywords, introduced by the model.
+Current numbers (2026-09-07 run): 120 control generations lost mitigation --
+96 compressor-cut, 24 model-dropped; where mitigation survived compression
+(n = 162) the model preserved it 85% of the time. Same shape as the
+keep-negation result (polarity restored 96/96 once keywords carried it).
+**The finding this licenses:** the bottleneck destroys stance and polarity;
+the models mostly transmit what they are given.
